@@ -4,4 +4,6 @@ services:
   bot:
     build:
       context: .
+    environment:
+      - TG_BOT_TOKEN=${TG_BOT_TOKEN}
     restart: always

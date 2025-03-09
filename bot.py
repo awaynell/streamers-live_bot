@@ -3,6 +3,12 @@ import logging
 from telegram import ForceReply, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 from handleStreamers import add_vk_streamer, get_my_vk_streamers, start_checking
+from dotenv import load_dotenv
+from os import getenv
+
+load_dotenv()
+
+tg_bot_token = getenv('TG_BOT_TOKEN')
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s", level=logging.INFO
@@ -29,8 +35,7 @@ async def echo(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 def main() -> None:
-    application = Application.builder().token(
-        '7159725656:AAGLzbH5DqYQtTsbDzvSYgGudMJ__hFtQY0').build()
+    application = Application.builder().token(tg_bot_token).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("add_vk_streamer", add_vk_streamer))
