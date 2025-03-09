@@ -58,36 +58,44 @@ async def get_my_vk_streamers(update, context):
 
 
 async def check_vk_streamers(context, chat_id):
+    vklivestreamers: List[VkStreamer] = getVKLiveStreamers(context=context)
+    updated_streamers = []
+
+    print(vklivestreamers)
+
+    for streamer in vklivestreamers:
+        old_status = streamer.isLive
+        new_status = await getIsVKLiveStreamerOnline(streamer.name)
+
+        print(f'{streamer.name} - {old_status} - {new_status}')
+
+        if old_status != new_status:
+            if new_status and not streamer.isSendNotification:
+                await context.application.bot.send_message(
+                    chat_id=chat_id,
+                    text=f"🟢 {streamer.name} начал стрим!"
+                )
+                streamer.isSendNotification = True
+            elif not new_status and streamer.isSendNotification:
+                await context.application.bot.send_message(
+                    chat_id=chat_id,
+                    text=f"⚪ {streamer.name} закончил стрим."
+                )
+                streamer.isSendNotification = False
+
+        streamer.isLive = new_status
+        updated_streamers.append(streamer)
+
+    setVKLiveStreamers(updated_streamers, context=context)
+
+
+async def check_vk_streamers_with_repeating(context, chat_id):
     while True:
         await asyncio.sleep(600)
-        vklivestreamers: List[VkStreamer] = getVKLiveStreamers(context=context)
-        updated_streamers = []
-
-        for streamer in vklivestreamers:
-            old_status = streamer.isLive
-            new_status = await getIsVKLiveStreamerOnline(streamer.name)
-
-            if old_status != new_status:
-                if new_status and not streamer.isSendNotification:
-                    await context.application.bot.send_message(
-                        chat_id=chat_id,
-                        text=f"🟢 {streamer.name} начал стрим!"
-                    )
-                    streamer.isSendNotification = True
-                elif not new_status and streamer.isSendNotification:
-                    await context.application.bot.send_message(
-                        chat_id=chat_id,
-                        text=f"⚪ {streamer.name} закончил стрим."
-                    )
-                    streamer.isSendNotification = False
-
-            streamer.isLive = new_status
-            updated_streamers.append(streamer)
-
-        setVKLiveStreamers(updated_streamers, context=context)
+        await check_vk_streamers(context, chat_id)
 
 
 async def start_checking(update, context):
     chat_id = update.message.chat_id
-    asyncio.create_task(check_vk_streamers(context, chat_id))
+    asyncio.create_task(check_vk_streamers_with_repeating(context, chat_id))
     await update.message.reply_text("✅ Запущен мониторинг стримеров.")
